@@ -1,0 +1,168 @@
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+
+public class Main {
+    static Scanner input = new Scanner(System.in);
+    static ArrayList<Task> taskLi = new ArrayList<>();
+
+    public static void main(String[] args) {
+        boolean exit = true;
+        while (exit) {
+            System.out.println("""
+                    Please choose an option: 
+                    (1) Add a task.
+                    (2) Remove a task.
+                    (3) Update a task.
+                    (4) List all tasks.
+                    (5) List by priority.
+                    (6) Save & Load (JSON).
+                    (0) Exit.
+                    """);
+            int userIntInput = input.nextInt();
+            input.nextLine(); // consume newline
+
+            switch (userIntInput) {
+                case 1 -> add();
+                case 2 -> remove();
+                case 3 -> update();
+                case 4 -> lal();
+                case 5 -> lbp();
+                case 6 -> saveAndLoad();
+                case 0 -> {
+                    System.out.println("k bye");
+                    exit = false;
+                }
+                default -> System.out.println("what are you yapping about bruh");
+            }
+        }
+    }
+
+    static void add() {
+        System.out.print("What's the name of your task?: ");
+        String name = input.nextLine();
+
+        System.out.print("What's the description of your task?: ");
+        String desc = input.nextLine();
+
+        int prio = -1;
+        while (prio < 0 || prio > 5) {
+            System.out.print("What is your task's priority? (0-5): ");
+            prio = input.nextInt();
+            input.nextLine();
+            switch (prio) {
+                case 0 -> System.out.println("Lowest priority");
+                case 1 -> System.out.println("Lower priority");
+                case 2 -> System.out.println("Low priority");
+                case 3 -> System.out.println("High priority");
+                case 4 -> System.out.println("Higher priority");
+                case 5 -> System.out.println("Highest priority");
+                default -> System.out.println("i said 0-5 that means 0-5");
+            }
+        }
+
+        Task newTask = new Task(name, desc, prio);
+        taskLi.add(newTask);
+    }
+
+    static void remove() {
+        if (taskLi.isEmpty()) {
+            System.out.println("No tasks to remove.");
+            return;
+        }
+        lal();
+        System.out.print("Enter the task number to remove: ");
+        int index = input.nextInt() - 1;
+        input.nextLine();
+        if (index >= 0 && index < taskLi.size()) {
+            taskLi.remove(index);
+            System.out.println("Task removed.");
+        } else {
+            System.out.println("That task doesn't exist.");
+        }
+    }
+
+    static void update() {
+        if (taskLi.isEmpty()) {
+            System.out.println("No tasks to update.");
+            return;
+        }
+        lal();
+        System.out.print("Enter the task number to update: ");
+        int index = input.nextInt() - 1;
+        input.nextLine();
+        if (index >= 0 && index < taskLi.size()) {
+            System.out.print("Enter new title: ");
+            String title = input.nextLine();
+
+            System.out.print("Enter new description: ");
+            String description = input.nextLine();
+
+            int prio = -1;
+            while (prio < 0 || prio > 5) {
+                System.out.print("Enter new priority (0-5): ");
+                prio = input.nextInt();
+                input.nextLine();
+                if (prio < 0 || prio > 5) {
+                    System.out.println("Priority must be between 0 and 5.");
+                }
+            }
+
+            taskLi.set(index, new Task(title, description, prio));
+            System.out.println("Task updated.");
+        } else {
+            System.out.println("Invalid task number.");
+        }
+    }
+
+    static void lal() {
+        if (taskLi.isEmpty()) {
+            System.out.println("No tasks available.");
+        } else {
+            for (int i = 0; i < taskLi.size(); i++) {
+                System.out.println((i + 1) + ". " + taskLi.get(i));
+            }
+        }
+    }
+
+    static void lbp() {
+        System.out.print("What priority would you like to see (0-5)?: ");
+        int prio = input.nextInt();
+        input.nextLine();
+        boolean found = false;
+        for (Task t : taskLi) {
+            if (t.getPrio() == prio) {
+                t.displayTask();
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("No tasks with that priority.");
+        }
+    }
+
+    static void saveAndLoad() {
+        try {
+            ObjectMapper map = new ObjectMapper();
+            File file = new File("data.json");
+
+            // Save current tasks
+            map.writeValue(file, taskLi);
+            System.out.println("Saved current tasks to data.json.");
+
+            // Load tasks back from file
+            List<Task> loaded = map.readValue(file, new TypeReference<List<Task>>() {});
+            System.out.println("Loaded tasks:");
+            for (Task t : loaded) {
+                t.displayTask();
+            }
+
+        } catch (IOException e) {
+            System.out.println("Error during save/load: " + e.getMessage());
+        }
+    }
+}
